@@ -16,7 +16,7 @@ Helm chart blueprint for this data platform deployment, covering:
 -   Pod placement rules – Affinity rules to ensure placement diversity to prevent single point of failures and optimize load distribution
 -   Pod resource sizing rules – Optimized Pod and JVM sizing settings for optimal performance and efficient resource usage
 -   Default settings to ensure Pod access security
--   Optional Wavefront Observability framework configuration 
+-   Optional [Tanzu Observability](https://docs.wavefront.com/kubernetes.html) framework configuration
 
 In addition to the Pod resource optimizations, this blueprint is validated and tested to provide Kubernetes node count and sizing recommendations [(see Kubernetes Cluster Requirements)](#kubernetes-cluster-requirements) to facilitate cloud platform capacity planning. The goal is optimize the number of required Kubernetes nodes in order to optimize server resource usage and, at the same time, ensuring runtime and resource diversity.
 
@@ -41,7 +41,7 @@ The "Small" size data platform in default configuration deploys the following:
 3. Solr with 2 nodes using the zookeeper deployed above
 4. Spark with 1 Master and 2 worker nodes
 
-The data platform can be optionally deployed with the wavefront observability framework. In that case, the wavefront collectors will be set up as a DaemonSet to collect the Kubernetes cluster metrics to enable runtime feed into the Tanzu Observability service. It will also be pre-configured to scrape the metrics from the Prometheus endpoint that each application (Kafka/Spark/Solr) emits the metrics to.
+The data platform can be optionally deployed with the Tanzu observability framework. In that case, the wavefront collectors will be set up as a DaemonSet to collect the Kubernetes cluster metrics to enable runtime feed into the Tanzu Observability service. It will also be pre-configured to scrape the metrics from the Prometheus endpoint that each application (Kafka/Spark/Solr) emits the metrics to.
 
 Bitnami charts can be used with [Kubeapps](https://kubeapps.com/) for deployment and management of Helm Charts in clusters. This Helm chart has been tested on top of [Bitnami Kubernetes Production Runtime](https://kubeprod.io/) (BKPR). Deploy BKPR to get automated TLS certificates, logging and monitoring for your applications.
 
@@ -169,7 +169,7 @@ Parameters below are set as per the recommended values, they can be overwritten 
 | `spark.metrics.workerAnnotations`       | Annotations for enabling prometheus to access the metrics endpoint of the worker nodes   | `{prometheus.io/scrape: "true", prometheus.io/path: "/metrics/", prometheus.io/port: "8081"}` |
 | `spark.metrics.resources.requests` | The requested resources for the metrics exporter container  | Spark exporter container resource requests for optimal resource usage size|
 
-### Wavefront chart parameters
+### Tanzu Observability (Wavefront) chart parameters
 
 | Parameter                                  | Description                                                                                                            | Default                                                 |
 |--------------------------------------------|------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------|
@@ -196,12 +196,12 @@ $ helm install my-release \
 
 The above command deploys the data platform with Kafka with 3 nodes (replicas).
 
-In case you need to deploy the data platform with Wavefront Observability Framework for all the applications (Kafka/Spark/Solr) in the data platform, you can specify the 'enabled' parameter using the `--set <component>.metrics.enabled=true` argument to `helm install`. For Solr, the parameter is `solr.exporter.enabled=true` For Example,
+In case you need to deploy the data platform with [Tanzu Observability](https://docs.wavefront.com/kubernetes.html) Framework for all the applications (Kafka/Spark/Solr) in the data platform, you can specify the 'enabled' parameter using the `--set <component>.metrics.enabled=true` argument to `helm install`. For Solr, the parameter is `solr.exporter.enabled=true` For Example,
 
 ```console
 $ helm install my-release bitnami/dataplatform-bp1 \
     --set kafka.metrics.kafka.enabled=true \
-    --set kafka.metrics.jmx.enabled=true \    
+    --set kafka.metrics.jmx.enabled=true \
     --set spark.metrics.enabled=true \
     --set solr.exporter.enabled=true \
     --set wavefront.enabled=true \
@@ -231,3 +231,29 @@ Bitnami will release a new chart updating its containers if a new version of the
 Find more information about how to deal with common errors related to Bitnami’s Helm charts in [this troubleshooting guide](https://docs.bitnami.com/general/how-to/troubleshoot-helm-chart-issues).
 
 In order to render complete information about the deployment including all the sub-charts, please use --render-subchart-notes flag while installing the chart.
+
+## Upgrading
+
+### To 6.0.0
+
+This major updates the Kafka subchart and the Solr subchart to their newest major, 13.0.0 and 1.0.0 respectively.
+
+### To 5.0.0
+
+This major updates the Zookeeper subchart to it newest major, 7.0.0, which renames all TLS-related settings. For more information on this subchart's major, please refer to [zookeeper upgrade notes](https://github.com/bitnami/charts/tree/master/bitnami/zookeeper#to-700).
+
+### To 4.0.0
+
+This major version updates the prefixes of individual applications metrics in Wavefront Collectors which are fed to Tanzu observability in order to light up the individual dashboards of Kafka, Spark and Solr on Tanzu Observability platform.
+
+### To 3.0.0
+
+This major updates the wavefront subchart to it newest major, 3.0.0, which contains a new major for kube-state-metrics. For more information on this subchart's major, please refer to [wavefront upgrade notes](https://github.com/bitnami/charts/tree/master/bitnami/wavefront#to-300).
+
+### To 2.0.0
+
+The affinity rules have been updated to allow deploying this chart and the `dataplatform-bp2` chart in the same cluster.
+
+### To 1.0.0
+
+This version updates the wavefront dependency to `2.x.x` where wavefront started to use a scratch image instead of debian. This can affect a current deployment if wavefront commands were provided. From now on, the only command that you will be able to execute inside the wavefront pod will be `/wavefront-collector`.

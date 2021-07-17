@@ -14,7 +14,7 @@
 image:
   registry: docker.io
   repository: bitnami/etcd
-  tag: 3.4.15-debian-10-r12
+  tag: 3.5.0-debian-10-r24
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -448,6 +448,26 @@ service:
   ##
   annotations: {}
 
+## Service account configuration
+##
+serviceAccount:
+  ## If true, create service account. If false, use service account defined by name.
+  ##
+  create: false
+  ## Name of service account to use or create.
+  ##
+  name: ""
+  ## Whether to auto mount the service account token
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server
+  ##
+  automountServiceAccountToken: true
+  ## Additional annotations to be included on the service account
+  ##
+  annotations: {}
+  ## Additional labels to be included on the service account
+  ##
+  labels: {}
+
 ## Enable persistence using Persistent Volume Claims
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
 ##
@@ -486,7 +506,7 @@ volumePermissions:
   image:
     registry: docker.io
     repository: bitnami/bitnami-shell
-    tag: "10"
+    tag: 10-debian-10-r134
     pullPolicy: Always
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.

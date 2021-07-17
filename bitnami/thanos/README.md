@@ -98,6 +98,7 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `image.pullSecrets`           | Specify docker-registry secret names as an array                                          | `[]` (does not add image pull secrets to deployed pods) |
 | `nameOverride`                | String to partially override common.names.fullname                                        | `nil`                                                   |
 | `fullnameOverride`            | String to fully override common.names.fullname                                            | `nil`                                                   |
+| `commonLabels`                | Labels to add to all deployed objects                                                     | `{}`                                                    |
 | `clusterDomain`               | Default Kubernetes cluster domain                                                         | `cluster.local`                                         |
 | `objstoreConfig`              | [Objstore configuration](https://thanos.io/storage.md/#configuration)                     | `nil`                                                   |
 | `indexCacheConfig`            | [Index cache configuration](https://thanos.io/components/store.md/#memcached-index-cache) | `nil`                                                   |
@@ -122,6 +123,10 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `query.stores`                                   | Store APIs to connect with Thanos Query                                                                                                                       | `[]`                            |
 | `query.sdConfig`                                 | Service Discovery configuration                                                                                                                               | `nil`                           |
 | `query.existingSDConfigmap`                      | Name of existing ConfigMap with Ruler configuration                                                                                                           | `nil`                           |
+| `query.extraContainers`                          | Extra containers running as sidecars to Thanos query                                                                                                          | `[]`                            |
+| `query.extraEnv`                                 | Extra environment variables for Thanos query container                                                                                                        | `[]`                            |
+| `query.extraVolumes`                             | Extra volumes to add to Thanos Query                                                                                                                          | `[]`                            |
+| `query.extraVolumeMounts`                        | Extra volume mounts to add to the query container                                                                                                             | `[]`                            |
 | `query.extraFlags`                               | Extra Flags to passed to Thanos Query                                                                                                                         | `[]`                            |
 | `query.replicaCount`                             | Number of Thanos Query replicas to deploy                                                                                                                     | `1`                             |
 | `query.strategyType`                             | Deployment Strategy Type                                                                                                                                      | `RollingUpdate`                 |
@@ -134,9 +139,13 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `query.tolerations`                              | Thanos Query tolerations for pod assignment                                                                                                                   | `[]` (evaluated as a template)  |
 | `query.podLabels`                                | Thanos Query pod labels                                                                                                                                       | `{}` (evaluated as a template)  |
 | `query.priorityClassName`                        | Controller priorityClassName                                                                                                                                  | `nil`                           |
-| `query.securityContext.enabled`                  | Enable security context for Thanos Query pods                                                                                                                 | `true`                          |
-| `query.securityContext.fsGroup`                  | Group ID for the Thanos Query filesystem                                                                                                                      | `1001`                          |
-| `query.securityContext.runAsUser`                | User ID for the Thanos Query container                                                                                                                        | `1001`                          |
+| `query.podSecurityContext.enabled`                        | Enable security context for the Thanos Query pod                                                                                                     | `true`                          |
+| `query.podSecurityContext.fsGroup`                        | Group ID for the filesystem used by Query container                                                                                                  | `1001`                          |
+| `query.podSecurityContext.runAsUser`                      | User ID for the service user running the Query pod                                                                                                   | `1001`                          |
+| `query.containerSecurityContext.enabled`                  | Enable container security context for Query container                                                                                                | `true`                          |
+| `query.containerSecurityContext.runAsNonRoot`             | Force the container Query to run as a non root user                                                                                                  | `true`                          |
+| `query.containerSecurityContext.allowPrivilegeEscalation` | Switch privilegeEscalation possiblity on or off for Query                                                                                            | `false`                         |
+| `query.containerSecurityContext.readOnlyRootFilesystem`   | mount / (root) as a readonly filesystem of Query container                                                                                           | `false`                         |
 | `query.resources.limits`                         | The resources limits for the Thanos Query container                                                                                                           | `{}`                            |
 | `query.resources.requests`                       | The requested resources for the Thanos Query container                                                                                                        | `{}`                            |
 | `query.podAnnotations`                           | Annotations for Thanos Query pods                                                                                                                             | `{}`                            |
@@ -157,8 +166,10 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `query.grpcTLS.client.existingSecret.keyMapping` | Key mapping between the expected keys and the existing secret's keys. [See more](https://github.com/bitnami/charts/tree/master/bitnami/common#existingsecret) | `nil`                           |
 | `query.service.type`                             | Kubernetes service type                                                                                                                                       | `ClusterIP`                     |
 | `query.service.clusterIP`                        | Thanos Query service clusterIP IP                                                                                                                             | `None`                          |
+| `query.service.externalTrafficPolicy`            | Thanos Query service externalTrafficPolicy                                                                                                                    | `Cluster`                       |
 | `query.service.http.port`                        | Service HTTP port                                                                                                                                             | `9090`                          |
 | `query.service.http.nodePort`                    | Service HTTP node port                                                                                                                                        | `nil`                           |
+| `query.service.targetPort`                       | Service targetPort override                                                                                                                                   | `http`                          |
 | `query.service.grpc.port`                        | Service GRPC port                                                                                                                                             | `10901`                         |
 | `query.service.grpc.nodePort`                    | Service GRPC node port                                                                                                                                        | `nil`                           |
 | `query.service.loadBalancerIP`                   | loadBalancerIP if service type is `LoadBalancer`                                                                                                              | `nil`                           |
@@ -210,6 +221,10 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `queryFrontend.enabled`                          | Enable/disable Thanos Query Frontend component                                                                                | `true`                         |
 | `queryFrontend.logLevel`                         | Thanos Query Frontend log level                                                                                               | `info`                         |
 | `queryFrontend.logFormat`                        | Thanos Query Frontend log format                                                                                              | `logfmt`                       |
+| `queryFrontend.extraContainers`                  | Extra containers running as sidecars to Thanos Query Frontend container                                                       | `[]`                           |
+| `queryFrontend.extraEnv`                         | Extra environment variables for Thanos Query Frontend container                                                               | `[]`                           |
+| `queryFrontend.extraVolumes`                     | Extra volumes to add to Thanos Query Frontend                                                                                 | `[]`                           |
+| `queryFrontend.extraVolumeMounts`                | Extra volume mounts to add to the query-frontend container                                                                    | `[]`                           |
 | `queryFrontend.extraFlags`                       | Extra Flags to passed to Thanos Query Frontend                                                                                | `[]`                           |
 | `queryFrontend.config`                           | Thanos Query Frontend cache configuration                                                                                     | `nil`                          |
 | `queryFrontend.hostAliases`                      | Add deployment host aliases                                                                                                   | `[]`                           |
@@ -225,18 +240,24 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `queryFrontend.tolerations`                      | Thanos Query Frontend tolerations for pod assignment                                                                          | `[]` (evaluated as a template) |
 | `queryFrontend.podLabels`                        | Thanos Query Frontend pod labels                                                                                              | `{}` (evaluated as a template) |
 | `queryFrontend.priorityClassName`                | Controller priorityClassName                                                                                                  | `nil`                          |
-| `queryFrontend.securityContext.enabled`          | Enable security context for Thanos Query Frontend pods                                                                        | `true`                         |
-| `queryFrontend.securityContext.fsGroup`          | Group ID for the Thanos Query Frontend filesystem                                                                             | `1001`                         |
-| `queryFrontend.securityContext.runAsUser`        | User ID for the Thanos queryFrontend container                                                                                | `1001`                         |
+| `queryFrontend.podSecurityContext.enabled`                        | Enable security context for the Thanos Queryfrontend pod                                                     | `true`                         |
+| `queryFrontend.podSecurityContext.fsGroup`                        | Group ID for the filesystem used by Queryfrontend container                                                  | `1001`                         |
+| `queryFrontend.podSecurityContext.runAsUser`                      | User ID for the service user running the Queryfrontend pod                                                   | `1001`                         |
+| `queryFrontend.containerSecurityContext.enabled`                  | Enable container security context for Queryfrontend container                                                | `true`                         |
+| `queryFrontend.containerSecurityContext.runAsNonRoot`             | Force the container Queryfrontend to run as a non root user                                                  | `true`                         |
+| `queryFrontend.containerSecurityContext.allowPrivilegeEscalation` | Switch privilegeEscalation possiblity on or off for Queryfrontend                                            | `false`                        |
+| `queryFrontend.containerSecurityContext.readOnlyRootFilesystem`   | mount / (root) as a readonly filesystem of Queryfrontend container                                           | `false`                        |
 | `queryFrontend.resources.limits`                 | The resources limits for the Thanos Query Frontend container                                                                  | `{}`                           |
 | `queryFrontend.resources.requests`               | The requested resources for the Thanos Query Frontend container                                                               | `{}`                           |
 | `queryFrontend.podAnnotations`                   | Annotations for Thanos Query Frontend pods                                                                                    | `{}`                           |
 | `queryFrontend.livenessProbe`                    | Liveness probe configuration for Thanos Query Frontend                                                                        | `Check values.yaml file`       |
 | `queryFrontend.readinessProbe`                   | Readiness probe configuration for Thanos Query Frontend                                                                       | `Check values.yaml file`       |
 | `queryFrontend.service.type`                     | Kubernetes service type                                                                                                       | `ClusterIP`                    |
-| `queryFrontend.service.clusterIP`                | Thanos Query Frontend  service clusterIP IP                                                                                   | `None`                         |
+| `queryFrontend.service.clusterIP`                | Thanos Query Frontend service clusterIP IP                                                                                    | `None`                         |
+| `queryFrontend.service.externalTrafficPolicy`    | Thanos Query Frontend service externalTrafficPolicy                                                                           | `Cluster`                      |
 | `queryFrontend.service.http.port`                | Service HTTP port                                                                                                             | `9090`                         |
 | `queryFrontend.service.http.nodePort`            | Service HTTP node port                                                                                                        | `nil`                          |
+| `queryFrontend.service.targetPort`               | Service targetPort override                                                                                                   | `http`                         |
 | `queryFrontend.service.loadBalancerIP`           | loadBalancerIP if service type is `LoadBalancer`                                                                              | `nil`                          |
 | `queryFrontend.service.loadBalancerSourceRanges` | Address that are allowed when service is LoadBalancer                                                                         | `[]`                           |
 | `queryFrontend.service.annotations`              | Annotations for Thanos Query Frontend service                                                                                 | `{}`                           |
@@ -259,6 +280,7 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `queryFrontend.ingress.certManager`              | Add annotations for cert-manager                                                                                              | `false`                        |
 | `queryFrontend.ingress.hostname`                 | Default host for the ingress resource                                                                                         | `thanos.local`                 |
 | `queryFrontend.ingress.annotations`              | Ingress annotations                                                                                                           | `[]`                           |
+| `queryFrontend.ingress.tls`                      | Create ingress TLS section                                                                                                    | `false`
 | `queryFrontend.ingress.extraHosts[0].name`       | Additional hostnames to be covered                                                                                            | `nil`                          |
 | `queryFrontend.ingress.extraHosts[0].path`       | Additional hostnames to be covered                                                                                            | `nil`                          |
 | `queryFrontend.ingress.extraTls[0].hosts[0]`     | TLS configuration for additional hostnames to be covered                                                                      | `nil`                          |
@@ -276,6 +298,10 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `bucketweb.logFormat`                             | Thanos Bucket Web log format                                                                                          | `logfmt`                       |
 | `bucketweb.refresh`                               | Refresh interval to download metadata from remote storage                                                             | `30m`                          |
 | `bucketweb.timeout`                               | Timeout to download metadata from remote storage                                                                      | `5m`                           |
+| `bucketweb.extraContainers`                       | Extra containers running as sidecars to Thanos Bucket Web container                                                   | `[]`                           |
+| `bucketweb.extraEnv`                              | Extra environment variables for Thanos Bucket Web container                                                           | `[]`                           |
+| `bucketweb.extraVolumes`                          | Extra volumes to add to Bucket Web                                                                                    | `[]`                           |
+| `bucketweb.extraVolumeMounts`                     | Extra volume mounts to add to the bucketweb container                                                                 | `[]`                           |
 | `bucketweb.extraFlags`                            | Extra Flags to passed to Thanos Bucket Web                                                                            | `[]`                           |
 | `bucketweb.hostAliases`                           | Add deployment host aliases                                                                                           | `[]`                           |
 | `bucketweb.replicaCount`                          | Number of Thanos Bucket Web replicas to deploy                                                                        | `1`                            |
@@ -289,9 +315,13 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `bucketweb.tolerations`                           | Thanos Bucket Web tolerations for pod assignment                                                                      | `[]` (evaluated as a template) |
 | `bucketweb.podLabels`                             | Thanos Bucket Web pod labels                                                                                          | `{}` (evaluated as a template) |
 | `bucketweb.priorityClassName`                     | Controller priorityClassName                                                                                          | `nil`                          |
-| `bucketweb.securityContext.enabled`               | Enable security context for Thanos Bucket Web pods                                                                    | `true`                         |
-| `bucketweb.securityContext.fsGroup`               | Group ID for the Thanos Bucket Web filesystem                                                                         | `1001`                         |
-| `bucketweb.securityContext.runAsUser`             | User ID for the Thanos Bucket Web container                                                                           | `1001`                         |
+| `bucketweb.podSecurityContext.enabled`                        | Enable security context for the Thanos Bucketweb pod                                                      | `true`                         |
+| `bucketweb.podSecurityContext.fsGroup`                        | Group ID for the filesystem used by Bucketweb container                                                   | `1001`                         |
+| `bucketweb.podSecurityContext.runAsUser`                      | User ID for the service user running the Bucketweb pod                                                    | `1001`                         |
+| `bucketweb.containerSecurityContext.enabled`                  | Enable container security context for Bucketweb container                                                 | `true`                         |
+| `bucketweb.containerSecurityContext.runAsNonRoot`             | Force the container Bucketweb to run as a non root user                                                   | `true`                         |
+| `bucketweb.containerSecurityContext.allowPrivilegeEscalation` | Switch privilegeEscalation possiblity on or off for Bucketweb                                             | `false`                        |
+| `bucketweb.containerSecurityContext.readOnlyRootFilesystem`   | mount / (root) as a readonly filesystem of Bucketweb container                                            | `false`                        |
 | `bucketweb.resources.limits`                      | The resources limits for the Thanos Bucket Web container                                                              | `{}`                           |
 | `bucketweb.resources.requests`                    | The requested resources for the Thanos Bucket Web container                                                           | `{}`                           |
 | `bucketweb.podAnnotations`                        | Annotations for Thanos Bucket Web pods                                                                                | `{}`                           |
@@ -299,8 +329,10 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `bucketweb.readinessProbe`                        | Readiness probe configuration for Thanos Compactor                                                                    | `Check values.yaml file`       |
 | `bucketweb.service.type`                          | Kubernetes service type                                                                                               | `ClusterIP`                    |
 | `bucketweb.service.clusterIP`                     | Thanos Bucket Web service clusterIP IP                                                                                | `None`                         |
+| `bucketweb.service.externalTrafficPolicy`         | Thanos Bucket Web service externalTrafficPolicy                                                                       | `Cluster`                      |
 | `bucketweb.service.http.port`                     | Service HTTP port                                                                                                     | `8080`                         |
 | `bucketweb.service.http.nodePort`                 | Service HTTP node port                                                                                                | `nil`                          |
+| `bucketweb.service.targetPort`                    | Service targetPort override                                                                                           | `http`                         |
 | `bucketweb.service.loadBalancerIP`                | loadBalancerIP if service type is `LoadBalancer`                                                                      | `nil`                          |
 | `bucketweb.service.loadBalancerSourceRanges`      | Address that are allowed when service is LoadBalancer                                                                 | `[]`                           |
 | `bucketweb.service.annotations`                   | Annotations for Thanos Bucket Web service                                                                             | `{}`                           |
@@ -337,6 +369,9 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `compactor.retentionResolution5m`                 | Resolution and Retention flag                                                                                        | `30d`                          |
 | `compactor.retentionResolution1h`                 | Resolution and Retention flag                                                                                        | `10y`                          |
 | `compactor.consistencyDelay`                      | Minimum age of fresh blocks before they are being processed                                                          | `30m`                          |
+| `compactor.extraEnv`                              | Extra environment variables for Thanos Compactor container                                                           | `[]`                           |
+| `compactor.extraVolumes`                          | Extra volumes to add to Thanos Compactor                                                                             | `[]`                           |
+| `compactor.extraVolumeMounts`                     | Extra volume mounts to add to the compactor container                                                                | `[]`                           |
 | `compactor.extraFlags`                            | Extra Flags to passed to Thanos Compactor                                                                            | `[]`                           |
 | `compactor.hostAliases`                           | Add deployment host aliases                                                                                          | `[]`                           |
 | `compactor.strategyType`                          | Deployment Strategy Type                                                                                             | `RollingUpdate`                |
@@ -349,9 +384,13 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `compactor.tolerations`                           | Thanos Compactor tolerations for pod assignment                                                                      | `[]` (evaluated as a template) |
 | `compactor.podLabels`                             | Thanos Compactor pod labels                                                                                          | `{}` (evaluated as a template) |
 | `compactor.priorityClassName`                     | Controller priorityClassName                                                                                         | `nil`                          |
-| `compactor.securityContext.enabled`               | Enable security context for Thanos Compactor pods                                                                    | `true`                         |
-| `compactor.securityContext.fsGroup`               | Group ID for the Thanos Compactor filesystem                                                                         | `1001`                         |
-| `compactor.securityContext.runAsUser`             | User ID for the Thanos Compactor container                                                                           | `1001`                         |
+| `compactor.podSecurityContext.enabled`                        | Enable security context for the Thanos Compactor pod                                                     | `true`                         |
+| `compactor.podSecurityContext.fsGroup`                        | Group ID for the filesystem used by Compactor container                                                  | `1001`                         |
+| `compactor.podSecurityContext.runAsUser`                      | User ID for the service user running the Compactor pod                                                   | `1001`                         |
+| `compactor.containerSecurityContext.enabled`                  | Enable container security context for Compactor container                                                | `true`                         |
+| `compactor.containerSecurityContext.runAsNonRoot`             | Force the container Compactor to run as a non root user                                                  | `true`                         |
+| `compactor.containerSecurityContext.allowPrivilegeEscalation` | Switch privilegeEscalation possiblity on or off for Compactor                                            | `false`                        |
+| `compactor.containerSecurityContext.readOnlyRootFilesystem`   | mount / (root) as a readonly filesystem of Compactor container                                           | `false`                        |
 | `compactor.resources.limits`                      | The resources limits for the Thanos Compactor container                                                              | `{}`                           |
 | `compactor.resources.requests`                    | The requested resources for the Thanos Compactor container                                                           | `{}`                           |
 | `compactor.podAnnotations`                        | Annotations for Thanos Compactor pods                                                                                | `{}`                           |
@@ -359,6 +398,7 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `compactor.readinessProbe`                        | Readiness probe configuration for Thanos Compactor                                                                   | `Check values.yaml file`       |
 | `compactor.service.type`                          | Kubernetes service type                                                                                              | `ClusterIP`                    |
 | `compactor.service.clusterIP`                     | Thanos Compactor service clusterIP IP                                                                                | `None`                         |
+| `compactor.service.externalTrafficPolicy`         | Thanos Compactor service externalTrafficPolicy                                                                       | `Cluster`                      |
 | `compactor.service.http.port`                     | Service HTTP port                                                                                                    | `9090`                         |
 | `compactor.service.http.nodePort`                 | Service HTTP node port                                                                                               | `nil`                          |
 | `compactor.service.loadBalancerIP`                | loadBalancerIP if service type is `LoadBalancer`                                                                     | `nil`                          |
@@ -379,7 +419,10 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
 | `storegateway.enabled`                               | Enable/disable Thanos Store Gateway component                                                                                                                 | `false`                        |
 | `storegateway.logLevel`                              | Thanos Store Gateway log level                                                                                                                                | `info`                         |
-| `storegateway.logFormat`                              | Thanos Store Gateway log format                                                                                                                                | `logfmt`                         |
+| `storegateway.logFormat`                             | Thanos Store Gateway log format                                                                                                                               | `logfmt`                       |
+| `storegateway.extraEnv`                              | Extra environment variables for Thanos Store Gateway container                                                                                                | `[]`                           |
+| `storegateway.extraVolumes`                          | Extra volumes to add to Thanos Store Gateway                                                                                                                  | `[]`                           |
+| `storegateway.extraVolumeMounts`                     | Extra volume mounts to add to the storegateway container                                                                                                      | `[]`                           |
 | `storegateway.extraFlags`                            | Extra Flags to passed to Thanos Store Gateway                                                                                                                 | `[]`                           |
 | `storegateway.grpc.tls.enabled`                      | Enable TLS for GRPC server                                                                                                                                    | `false`                        |
 | `storegateway.grpc.tls.cert`                         | TLS Certificate for gRPC server - ignored if existingSecret is provided                                                                                       | `nil`                          |
@@ -402,9 +445,13 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `storegateway.tolerations`                           | Thanos Store Gateway tolerations for pod assignment                                                                                                           | `[]` (evaluated as a template) |
 | `storegateway.podLabels`                             | Thanos Store Gateway pod labels                                                                                                                               | `{}` (evaluated as a template) |
 | `storegateway.priorityClassName`                     | Controller priorityClassName                                                                                                                                  | `nil`                          |
-| `storegateway.securityContext.enabled`               | Enable security context for Thanos Store Gateway pods                                                                                                         | `true`                         |
-| `storegateway.securityContext.fsGroup`               | Group ID for the Thanos Store Gateway filesystem                                                                                                              | `1001`                         |
-| `storegateway.securityContext.runAsUser`             | User ID for the Thanos Store Gateway container                                                                                                                | `1001`                         |
+| `storegateway.podSecurityContext.enabled`                        | Enable security context for the Thanos Storegateway pod                                                                                           | `true`                         |
+| `storegateway.podSecurityContext.fsGroup`                        | Group ID for the filesystem used by Storegateway container                                                                                        | `1001`                         |
+| `storegateway.podSecurityContext.runAsUser`                      | User ID for the service user running the Storegateway pod                                                                                         | `1001`                         |
+| `storegateway.containerSecurityContext.enabled`                  | Enable container security context for Storegateway container                                                                                      | `true`                         |
+| `storegateway.containerSecurityContext.runAsNonRoot`             | Force the container Storegateway to run as a non root user                                                                                        | `true`                         |
+| `storegateway.containerSecurityContext.allowPrivilegeEscalation` | Switch privilegeEscalation possiblity on or off for Storegateway                                                                                  | `false`                        |
+| `storegateway.containerSecurityContext.readOnlyRootFilesystem`   | mount / (root) as a readonly filesystem of Storegateway container                                                                                 | `false`                        |
 | `storegateway.resources.limits`                      | The resources limits for the Thanos Store Gateway container                                                                                                   | `{}`                           |
 | `storegateway.resources.requests`                    | The requested resources for the Thanos Store Gateway container                                                                                                | `{}`                           |
 | `storegateway.podAnnotations`                        | Annotations for Thanos Store Gateway pods                                                                                                                     | `{}`                           |
@@ -412,6 +459,7 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `storegateway.readinessProbe`                        | Readiness probe configuration for Thanos Store Gateway                                                                                                        | `Check values.yaml file`       |
 | `storegateway.service.type`                          | Kubernetes service type                                                                                                                                       | `ClusterIP`                    |
 | `storegateway.service.clusterIP`                     | Thanos Store Gateway service clusterIP IP                                                                                                                     | `None`                         |
+| `storegateway.service.externalTrafficPolicy`         | Thanos Store Gateway service externalTrafficPolicy                                                                                                            | `Cluster`                      |
 | `storegateway.service.http.port`                     | Service HTTP port                                                                                                                                             | `9090`                         |
 | `storegateway.service.http.nodePort`                 | Service HTTP node port                                                                                                                                        | `nil`                          |
 | `storegateway.service.grpc.port`                     | Service GRPC port                                                                                                                                             | `10901`                        |
@@ -443,13 +491,17 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------ |
 | `ruler.enabled`                               | Enable/disable Thanos Ruler component                                                                        | `false`                        |
 | `ruler.logLevel`                              | Thanos Ruler log level                                                                                       | `info`                         |
-| `ruler.logFormat`                              | Thanos Ruler log format                                                                                       | `logfmt`                         |
+| `ruler.logFormat`                             | Thanos Ruler log format                                                                                      | `logfmt`                       |
 | `ruler.replicaLabel`                          | Label to treat as a replica indicator along which data is deduplicated                                       | `replica`                      |
 | `ruler.dnsDiscovery.enabled`                  | Enable Query APIs discovery via DNS                                                                          | `true`                         |
 | `ruler.alertmanagers`                         | Alermanager URLs array                                                                                       | `[]`                           |
 | `ruler.hostAliases`                           | Add deployment host aliases                                                                                  | `[]`                           |
 | `ruler.evalInterval`                          | The default evaluation interval to use                                                                       | `1m`                           |
 | `ruler.clusterName`                           | Used to set the 'ruler_cluster' label                                                                        | `nil`                          |
+| `ruler.extraContainers`                       | Extra containers running as sidecars to Thanos Ruler container                                               | `[]`                           |
+| `ruler.extraEnv`                              | Extra environment variables for Thanos Ruler container                                                       | `[]`                           |
+| `ruler.extraVolumes`                          | Extra volumes to add to Thanos Ruler                                                                         | `[]`                           |
+| `ruler.extraVolumeMounts`                     | Extra volume mounts to add to the ruler container                                                            | `[]`                           |
 | `ruler.extraFlags`                            | Extra Flags to passed to Thanos Ruler                                                                        | `[]`                           |
 | `ruler.config`                                | Ruler configuration                                                                                          | `nil`                          |
 | `ruler.existingConfigmap`                     | Name of existing ConfigMap with Ruler configuration                                                          | `nil`                          |
@@ -465,9 +517,13 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `ruler.tolerations`                           | Thanos Ruler tolerations for pod assignment                                                                  | `[]` (evaluated as a template) |
 | `ruler.podLabels`                             | Thanos Ruler pod labels                                                                                      | `{}` (evaluated as a template) |
 | `ruler.priorityClassName`                     | Controller priorityClassName                                                                                 | `nil`                          |
-| `ruler.securityContext.enabled`               | Enable security context for Thanos Ruler pods                                                                | `true`                         |
-| `ruler.securityContext.fsGroup`               | Group ID for the Thanos Ruler filesystem                                                                     | `1001`                         |
-| `ruler.securityContext.runAsUser`             | User ID for the Thanos Ruler container                                                                       | `1001`                         |
+| `ruler.podSecurityContext.enabled`                        | Enable security context for the Thanos Ruler pod                                                 | `true`                         |
+| `ruler.podSecurityContext.fsGroup`                        | Group ID for the filesystem used by Ruler container                                              | `1001`                         |
+| `ruler.podSecurityContext.runAsUser`                      | User ID for the service user running the Ruler pod                                               | `1001`                         |
+| `ruler.containerSecurityContext.enabled`                  | Enable container security context for Ruler container                                            | `true`                         |
+| `ruler.containerSecurityContext.runAsNonRoot`             | Force the container Ruler to run as a non root user                                              | `true`                         |
+| `ruler.containerSecurityContext.allowPrivilegeEscalation` | Switch privilegeEscalation possiblity on or off for Ruler                                        | `false`                        |
+| `ruler.containerSecurityContext.readOnlyRootFilesystem`   | mount / (root) as a readonly filesystem of Ruler container                                       | `false`                        |
 | `ruler.resources.limits`                      | The resources limits for the Thanos Ruler container                                                          | `{}`                           |
 | `ruler.resources.requests`                    | The requested resources for the Thanos Ruler container                                                       | `{}`                           |
 | `ruler.podAnnotations`                        | Annotations for Thanos Ruler pods                                                                            | `{}`                           |
@@ -475,8 +531,10 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `ruler.readinessProbe`                        | Readiness probe configuration for Thanos Ruler                                                               | `Check values.yaml file`       |
 | `ruler.service.type`                          | Kubernetes service type                                                                                      | `ClusterIP`                    |
 | `ruler.service.clusterIP`                     | Thanos Ruler service clusterIP IP                                                                            | `None`                         |
+| `ruler.service.externalTrafficPolicy`         | Thanos Ruler service externalTrafficPolicy                                                                   | `Cluster`                      |
 | `ruler.service.http.port`                     | Service HTTP port                                                                                            | `9090`                         |
 | `ruler.service.http.nodePort`                 | Service HTTP node port                                                                                       | `nil`                          |
+| `ruler.service.targetPort`                    | Service targetPort override                                                                                  | `http`                         |
 | `ruler.service.grpc.port`                     | Service GRPC port                                                                                            | `10901`                        |
 | `ruler.service.grpc.nodePort`                 | Service GRPC node port                                                                                       | `nil`                          |
 | `ruler.service.loadBalancerIP`                | loadBalancerIP if service type is `LoadBalancer`                                                             | `nil`                          |
@@ -516,10 +574,15 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
 | `receive.enabled`                               | Enable/disable Thanos Receive component                                                                        | `false`                                 |
 | `receive.logLevel`                              | Thanos Receive log level                                                                                       | `info`                                  |
-| `receive.logFormat`                              | Thanos Receive log format                                                                                       | `logfmt`                                  |
+| `receive.logFormat`                             | Thanos Receive log format                                                                                      | `logfmt`                                |
+| `receive.tsdbRetention`                         | Thanos Receive TSDB retention period                                                                           | `15d`                         |
 | `receive.replicationFactor`                     | Thanos Receive replication-factor                                                                              | `1`                                     |
 | `receive.replicaLabel`                          | Label to treat as a replica indicator along which data is deduplicated                                         | `replica`                               |
 | `receive.alertmanagers`                         | Alermanager URLs array                                                                                         | `[]`                                    |
+| `receive.extraContainers`                       | Extra containers running as sidecars to Thanos Receive container                                               | `[]`                                    |
+| `receive.extraEnv`                              | Extra environment variables for Thanos Receive container                                                       | `[]`                                    |
+| `receive.extraVolumes`                          | Extra volumes to add to Thanos Receive                                                                         | `[]`                                    |
+| `receive.extraVolumeMounts`                     | Extra volume mounts to add to the receive container                                                            | `[]`                                    |
 | `receive.extraFlags`                            | Extra Flags to passed to Thanos Receive                                                                        | `[]`                                    |
 | `receive.hostAliases`                           | Add deployment host aliases                                                                                    | `[]`                                    |
 | `receive.config`                                | Receive Hashring configuration                                                                                 | `[{"endpoints": [ "127.0.0.1:10901"]}]` |
@@ -535,9 +598,13 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `receive.tolerations`                           | Thanos Receive tolerations for pod assignment                                                                  | `[]` (evaluated as a template)          |
 | `receive.podLabels`                             | Thanos Receive pod labels                                                                                      | `{}` (evaluated as a template)          |
 | `receive.priorityClassName`                     | Controller priorityClassName                                                                                   | `nil`                                   |
-| `receive.securityContext.enabled`               | Enable security context for Thanos Receive pods                                                                | `true`                                  |
-| `receive.securityContext.fsGroup`               | Group ID for the Thanos Receive filesystem                                                                     | `1001`                                  |
-| `receive.securityContext.runAsUser`             | User ID for the Thanos Receive container                                                                       | `1001`                                  |
+| `receive.podSecurityContext.enabled`                        | Enable security context for the Thanos Receive pod                                                 | `true`                                  |
+| `receive.podSecurityContext.fsGroup`                        | Group ID for the filesystem used by Receive container                                              | `1001`                                  |
+| `receive.podSecurityContext.runAsUser`                      | User ID for the service user running the Receive pod                                               | `1001`                                  |
+| `receive.containerSecurityContext.enabled`                  | Enable container security context for Receive container                                            | `true`                                  |
+| `receive.containerSecurityContext.runAsNonRoot`             | Force the container Receive to run as a non root user                                              | `true`                                  |
+| `receive.containerSecurityContext.allowPrivilegeEscalation` | Switch privilegeEscalation possiblity on or off for Receive                                        | `false`                                 |
+| `receive.containerSecurityContext.readOnlyRootFilesystem`   | mount / (root) as a readonly filesystem of Receive container                                       | `false`                                 |
 | `receive.resources.limits`                      | The resources limits for the Thanos Receive container                                                          | `{}`                                    |
 | `receive.resources.requests`                    | The requested resources for the Thanos Receive container                                                       | `{}`                                    |
 | `receive.podAnnotations`                        | Annotations for Thanos Ruler pods                                                                              | `{}`                                    |
@@ -545,8 +612,10 @@ The following tables lists the configurable parameters of the Thanos chart and t
 | `receive.readinessProbe`                        | Readiness probe configuration for Thanos Ruler                                                                 | `Check values.yaml file`                |
 | `receive.service.type`                          | Kubernetes service type                                                                                        | `ClusterIP`                             |
 | `receive.service.clusterIP`                     | Thanos Ruler service clusterIP IP                                                                              | `None`                                  |
+| `receive.service.externalTrafficPolicy`         | Thanos Ruler service externalTrafficPolicy                                                                     | `Cluster`                               |
 | `receive.service.http.port`                     | Service HTTP port                                                                                              | `9090`                                  |
 | `receive.service.http.nodePort`                 | Service HTTP node port                                                                                         | `nil`                                   |
+| `receive.service.targetPort`                    | Service targetPort override                                                                                    | `http`                                  |
 | `receive.service.grpc.port`                     | Service GRPC port                                                                                              | `10901`                                 |
 | `receive.service.grpc.nodePort`                 | Service GRPC node port                                                                                         | `nil`                                   |
 | `receive.service.remoteWrite.port`              | Service remote write port                                                                                      | `19291`                                 |
@@ -772,6 +841,38 @@ As an alternative, you can use of the preset configurations for pod affinity, po
 Find more information about how to deal with common errors related to Bitnami’s Helm charts in [this troubleshooting guide](https://docs.bitnami.com/general/how-to/troubleshoot-helm-chart-issues).
 
 ## Upgrading
+
+### To 5.0.0
+
+This major update changes the `securityContext` interface in the `values.yaml` file.
+
+Please note if you have changes in the `securityContext` fields those need to be migrated to `podSecurityContext`.
+
+```diff
+# ...
+- securityContext:
++ podSecurityContext:
+# ...
+```
+
+Other than that a new `securityContext` interface for containers got introduced `containerSecurityContext`. It's default is enabled so if you do not need it you need to opt out of it.
+
+```diff
+# ...
++ containerSecurityContext
++   enabled: true  # opt out by enabled: false
++   capabilities:
++     drop:
++     - ALL
++   runAsNonRoot: true
++   allowPrivilegeEscalation: false
++   readOnlyRootFilesystem: false
+# ...
+```
+
+### To 4.0.0
+
+This major updates the MinIO subchart to its newest major, 7.0.0, which removes previous configuration of `securityContext` and moves to `podSecurityContext` and `containerSecurityContext`.
 
 ### To 3.3.0
 
